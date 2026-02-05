@@ -9,29 +9,30 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     git \
-    curl
+    curl \
+    libicu-dev
 
-# تفعيل مود الـ Rewrite في Apache (ضروري للروابط)
+# تفعيل مود الـ Rewrite في Apache
 RUN a2enmod rewrite
 
-# تثبيت إضافات PHP الخاصة بقاعدة البيانات
-RUN docker-php-ext-install pdo_mysql mbstring gd
+# تثبيت إضافات PHP
+RUN docker-php-ext-install pdo_mysql mbstring gd intl
 
-# تحميل Composer داخل السيرفر
+# تحميل Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# نسخ ملفات مشروعك للسيرفر
+# نسخ ملفات المشروع
 COPY . /var/www/html
 
-# تحديد المجلد الرئيسي للموقع (الموجود فيه index.php)
+# إعدادات Apache
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# إعطاء الصلاحيات اللازمة لمجلدات لارافيل
+# الصلاحيات
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# تشغيل Composer لتثبيت المكتبات
+# السطر السحري لتجاوز الخطأ الذي ظهر في صورة image_2132af
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
-# تعيين المنفذ (Port)
+
 EXPOSE 80
