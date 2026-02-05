@@ -17,11 +17,10 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY . .
 
-# 6. تثبيت مكتبات PHP (مع تجاهل قيود المنصة لضمان النجاح)
+# 6. تثبيت مكتبات PHP (مع تجاهل قيود المنصة)
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-# 7. تثبيت مكتبات Node وبناء ملفات Vite (لحل مشكلة الـ Manifest والألوان)
-# أضفنا --frozen-lockfile لضمان السرعة وعدم التغيير
+# 7. تثبيت مكتبات Node وبناء ملفات Vite (لحل مشكلة التنسيق والألوان)
 RUN npm install && npm run build
 
 # 8. إعدادات Apache لتوجه السيرفر لمجلد public
@@ -29,10 +28,14 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# 9. الصلاحيات وإعداد قاعدة البيانات SQLite (الضربة القاضية لمشاكل الصلاحيات)
+# 9. إعداد الصلاحيات الأولية وقاعدة البيانات
 RUN mkdir -p database storage bootstrap/cache \
     && touch database/database.sqlite \
     && chmod -R 777 database storage bootstrap/cache \
     && chown -R www-data:www-data /var/www/html
+
+# 10. الضربة القاضية: تشغيل المهاجريشن تلقائياً عند كل تشغيل للسيرفر
+# السطر ده بيضمن إن جدول sessions يتخلق أول ما الموقع يفتح
+ENTRYPOINT ["/bin/sh", "-c", "php artisan migrate --force && apache2-foreground"]
 
 EXPOSE 80
