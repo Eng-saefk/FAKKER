@@ -21,6 +21,14 @@ RUN docker-php-ext-install pdo_mysql mbstring gd intl
 # تحميل Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# تثبيت Node.js لبناء ملفات Vite
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
+
+# تثبيت مكتبات Node وبناء الملفات
+COPY package*.json ./
+RUN npm install && npm run build
+
 # نسخ ملفات المشروع
 COPY . /var/www/html
 
