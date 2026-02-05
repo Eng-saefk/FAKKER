@@ -32,7 +32,6 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # تشغيل Composer لتثبيت المكتبات
-RUN composer install --no-dev --optimize-autoloader
-
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 # تعيين المنفذ (Port)
 EXPOSE 80
