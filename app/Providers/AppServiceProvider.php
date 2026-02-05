@@ -3,24 +3,20 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
-    public function boot()
-{
-    if (config('app.env') !== 'local') {
-        \URL::forceScheme('https');
+    public function boot(): void
+    {
+        // هذا السطر يخبر لارفيل أن كل الروابط والتحويلات يجب أن تكون آمنة
+        if (config('app.env') !== 'local') {
+            URL::forceScheme('https');
+        }
     }
-}
 }
