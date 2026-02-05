@@ -33,5 +33,5 @@ RUN mkdir -p database storage bootstrap/cache \
 
 # 8. التشغيل مع تنظيف الكاش وإجبار الـ File Session
 ENTRYPOINT ["/bin/sh", "-c", "php artisan config:clear && php artisan migrate --force && apache2-foreground"]
-
+RUN chmod -R 777 /var/www/html/database /var/www/html/storage
 EXPOSE 80
