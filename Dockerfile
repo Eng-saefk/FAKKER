@@ -17,25 +17,26 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY . .
 
-# 6. تثبيت مكتبات PHP (مع تجاهل قيود المنصة)
+# 6. تثبيت مكتبات PHP
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-# 7. تثبيت مكتبات Node وبناء ملفات Vite (لحل مشكلة التنسيق والألوان)
-RUN npm install && npm run build
+# 7. بناء ملفات Vite وتحديد صلاحيات مجلد الـ build فوراً
+RUN npm install && npm run build \
+    && mkdir -p public/build \
+    && chown -R www-data:www-data public/build
 
-# 8. إعدادات Apache لتوجه السيرفر لمجلد public
+# 8. إعدادات Apache
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# 9. إعداد الصلاحيات الأولية وقاعدة البيانات
+# 9. الصلاحيات وقاعدة البيانات
 RUN mkdir -p database storage bootstrap/cache \
     && touch database/database.sqlite \
     && chmod -R 777 database storage bootstrap/cache \
     && chown -R www-data:www-data /var/www/html
 
-# 10. الضربة القاضية: تشغيل المهاجريشن تلقائياً عند كل تشغيل للسيرفر
-# السطر ده بيضمن إن جدول sessions يتخلق أول ما الموقع يفتح
-ENTRYPOINT ["/bin/sh", "-c", "php artisan migrate --force && apache2-foreground"]
+# 10. التشغيل التلقائي
+ENTRYPOINT ["/bin/sh", "-c", "php artisan migrate --force && php artisan config:cache && php artisan view:cache && apache2-foreground"]
 
 EXPOSE 80
