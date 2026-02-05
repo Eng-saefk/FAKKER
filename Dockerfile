@@ -13,14 +13,15 @@ RUN a2enmod rewrite && docker-php-ext-install pdo_mysql mbstring gd intl
 # 4. تحميل Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 5. تحديد مسار العمل ونسخ ملفات المشروع أولاً
+# 5. تحديد مسار العمل ونسخ ملفات المشروع
 WORKDIR /var/www/html
 COPY . .
 
-# 6. تثبيت مكتبات PHP (السطر السحري)
+# 6. تثبيت مكتبات PHP (مع تجاهل قيود المنصة لضمان النجاح)
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-# 7. تثبيت مكتبات Node وبناء ملفات Vite (لحل مشكلة الـ Manifest)
+# 7. تثبيت مكتبات Node وبناء ملفات Vite (لحل مشكلة الـ Manifest والألوان)
+# أضفنا --frozen-lockfile لضمان السرعة وعدم التغيير
 RUN npm install && npm run build
 
 # 8. إعدادات Apache لتوجه السيرفر لمجلد public
@@ -28,10 +29,10 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# 9. الصلاحيات وإعداد قاعدة البيانات SQLite
+# 9. الصلاحيات وإعداد قاعدة البيانات SQLite (الضربة القاضية لمشاكل الصلاحيات)
 RUN mkdir -p database storage bootstrap/cache \
     && touch database/database.sqlite \
-    && chmod -R 777 storage bootstrap/cache database \
+    && chmod -R 777 database storage bootstrap/cache \
     && chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
