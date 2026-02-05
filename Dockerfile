@@ -35,4 +35,5 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # السطر السحري لتجاوز الخطأ الذي ظهر في صورة image_2132af
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 RUN chmod -R 777 storage bootstrap/cache database
+RUN touch database/database.sqlite && chmod 777 database/database.sqlite
 EXPOSE 80
